@@ -1,0 +1,13 @@
+{
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/home/jakubfraczek/Dokumenty/SemestrIV/Sysopy",
+            "binaryPath": "/home/jakubfraczek/Dokumenty/SemestrIV/Sysopy/countdown",
+            "binaryArgs": []
+        }
+    ],
+    "C_Cpp.errorSquiggles": "disabled",
+    "files.associations": {
+        "random": "c"
+    }
+}
