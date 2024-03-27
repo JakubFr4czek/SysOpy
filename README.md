@@ -1,4 +1,4 @@
-# SysOpy
+# SysOpy - Systemy Operacyjne
 
 Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 
