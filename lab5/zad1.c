@@ -3,12 +3,14 @@
 #include <signal.h>
 #include <string.h>
 
+//https://stackoverflow.com/questions/25261/set-and-oldset-in-sigprocmask
+
 void handle_signal(int signum) {
     printf("Handling SIGUSR1 with signal function...\n");
 }
 
 void sigaction_signal_handler(int signum) {
-    printf("Handling SIGUSR1 with sigaction function...\n");
+    printf("Handling with sigaction function...\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -30,16 +32,17 @@ int main(int argc, char *argv[]) {
     }
     else if (strcmp(argv[1], "mask") == 0) { // signal will be masked
 
-        //TODO: naprawic
-
         // Block SIGUSR1
         sigset_t mask;
         sigemptyset(&mask);
         sigaddset(&mask, SIGUSR1);
-        if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1) {
+        if (sigprocmask(SIG_SETMASK, &mask, NULL) == -1) {
             perror("sigprocmask");
-            return EXIT_FAILURE;
+            return 1;
         }
+
+        raise(SIGUSR1);
+
         // checks if blocked signal is visible //TODO: nie dziala
         sigset_t sigset;
 
