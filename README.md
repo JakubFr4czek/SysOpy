@@ -16,3 +16,6 @@ Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 ## Laboratorium 4
 [Procesy)](./lab4)
 
+## Laboratorium 5
+[Sygnały](./lab5)
+
