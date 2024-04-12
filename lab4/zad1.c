@@ -20,9 +20,9 @@ int main(int argc, char *argv[]) {
 
     }
 
-    for(int i = 0; i < procesess_count; i += 1){
+    /*for(int i = 0; i < procesess_count; i += 1){
          wait(NULL);
-    }
+    }*/
 
     printf("Argv[1]: %s\n", argv[1]);
 
