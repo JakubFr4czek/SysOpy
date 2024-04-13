@@ -19,7 +19,7 @@ int main(int argc, char* argv[]){
     mkfifo(fifo_in, 0666);
     mkfifo(fifo_out, 0666); 
 
-    pid_t pid = fork();
+    pid_t pid = vfork();
 
     if (pid == 0) {
         execl(catcher, catcher, NULL);
