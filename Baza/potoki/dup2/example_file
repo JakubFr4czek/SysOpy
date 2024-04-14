@@ -1,0 +1,1 @@
+    execlp("grep", "grep", "kot", "dup2_write.c", NULL);
