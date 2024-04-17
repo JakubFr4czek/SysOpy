@@ -2,6 +2,9 @@
 
 Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 
+## Baza
+[Przykładowe realizacje różnych zadań](./Baza)
+
 ## Laboratorium 1
 [Makefile](./lab1)
 
@@ -18,4 +21,7 @@ Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 
 ## Laboratorium 5
 [Sygnały](./lab5)
+
+## Laboratorium 6
+[Potoki](./lab6)
 
