@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
         sigfillset(&mask); 
         sigdelset(&mask, SIGUSR1);
         sigdelset(&mask, SIGINT); // So ctr+c would work
-        //sigprocmask(SIG_SETMASK, &mask, NULL);
+        sigprocmask(SIG_SETMASK, &mask, NULL);
 
         sigaction(SIGUSR1, &act, NULL); //Intercepting SIGUSR1 signal
 

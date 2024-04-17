@@ -13,6 +13,33 @@ double dziel(int a, int b);
 */
 
 int sumuj(int *tab, int n){
+
+    int suma = 0;
+
+    for(int i = 0; i < n; i += 1){
+
+        suma += tab[i];
+
+    }
+
+    return suma;
+
+}
+
+double dziel(int a, int b){
+
+    if(b == 0){
+        perror("B cannot be 0!");
+        exit(EXIT_FAILURE);
+    }
+
+    return (double)a / b;
+
+}
+
+/*
+
+int sumuj(int *tab, int n){
     int sum = 0;
     for (int i = 0; i < n; i++){
         sum += *(tab + i);
@@ -23,4 +50,6 @@ int sumuj(int *tab, int n){
 double dziel(int a, int b){
     return (double)a/b;
 }
+
+*/
 

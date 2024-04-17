@@ -20,7 +20,7 @@ int main(int argc, char** argv){
             return 3;
         }
 		  
-    //  koniec
+        //  koniec
         }else{
             close(fd[0]);
         }
@@ -29,22 +29,32 @@ int main(int argc, char** argv){
         char* filename1 = argv[1];
         char* filename2 = argv[2];
         int fd[2];
-    //  otwórz plik filename2 z prawami dostępu rwxr--r--, 
-    //  jeśli plik istnieje otwórz go i usuń jego zawartość
+        //  otwórz plik filename2 z prawami dostępu rwx_r--_r--, 
+        //  jeśli plik istnieje otwórz go i usuń jego zawartość
+        
+        mode_t mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IROTH;
+        int file = open(filename2, O_WRONLY | O_TRUNC, mode);
 
-
-//  koniec
+        //  koniec
         pipe(fd);
         pid_t pid = fork();
         if (pid == 0){
-//  zamknij deskryptor do zapisu,
-//  przekieruj deskryptor standardowego wyjścia na deskryptor pliku filename2 i zamknij plik,
-//  wykonaj program sort na filename1
-//  w przypadku błędu zwróć 3.
+        //  zamknij deskryptor do zapisu,
+        //  przekieruj deskryptor standardowego wyjścia na deskryptor pliku filename2 i zamknij plik,
+        //  wykonaj program sort na filename1
+        //  w przypadku błędu zwróć 3.
 
+        close(fd[1]);
 
+        dup2(file, STDOUT_FILENO);
 
-//  koniec
+        close(file);
+
+        if(execl("/usr/bin/sort","sort", filename1, NULL)){
+            return 3;
+        }
+
+        //  koniec
         }else{
             close(fd[0]);
         }

@@ -1,0 +1,101 @@
+//Przekierowanie deskryptowa
+
+int dup2(int oldfd, int newfd) //Jej działanie polega na skopiowaniu deskryptora oldfd na miejsce deskryptora o numerze newfd i w razie potrzeby uprzednim zamknięciu newfd
+
+//Przekierowanie deskryptora wyjścia standardowego do pliku
+
+dup2(file, STDOUT_FILENO);
+close(file);
+
+//Wywołanie programu na wyjście standardowe
+
+execl("/usr/bin/sort","sort", filename1, NULL) //NULL musi być na końcu
+
+//Otwieranie pliku z konkretnymi uprawnieniami
+
+mode_t mode; //przechowuje uprawnienia
+
+/*
+
+S_IRWXU  00700 user (file owner) has read, write, andexecute permission
+S_IRUSR  00400 user has read permission
+S_IWUSR  00200 user has write permission
+S_IXUSR  00100 user has execute permission
+S_IRWXG  00070 group has read, write, and executepermission
+S_IRGRP  00040 group has read permission
+S_IWGRP  00020 group has write permission
+S_IXGRP  00010 group has execute permission
+S_IRWXO  00007 others have read, write, and executepermission
+S_IROTH  00004 others have read permission
+S_IWOTH  00002 others have write permission
+S_IXOTH  00001 others have execute permission
+S_ISUID  0004000 set-user-ID bit
+S_ISGID  0002000 set-group-ID bit (see inode(7)).
+S_ISVTX  0001000 sticky bit (see inode(7)).
+
+*/
+
+int desriptor = open(file, flags, mode);
+
+/*
+Możliwe flagi: O_RDONLY, O_WRONLY, or O_RDWR
+*/
+
+//Deskryptor zapisu
+fd[1]
+close(fd[0]);
+
+//Deskryptor odczytu
+fd[0]
+close(fd[1])
+
+//Tworzenie nienzawanego potoku
+int fd[2];
+pipe(fd);
+
+//Wysłanie sygnału z playloadem
+union sigval value; // Contains value field and pointer field
+value.sival_int = 5;
+sleep(1); //EKSTREMALNIE WAŻNIE JEŚLI UŻYWANE IF'ie PO STWORZENIU OSOBNEGO PROCESU
+sigqueue(<child_pid>, <signal>, value);
+
+//Ustawianie maski
+sigset_t mask; 
+sigfillset(&mask); 
+sigdelset(&mask, SIGUSR1);
+sigdelset(&mask, SIGINT); // So ctr+c would work
+sigprocmask(SIG_SETMASK, &mask, NULL);
+
+//Przechwytywanie sygnału i odczyt payloadu
+struct sigaction act;
+act.sa_flags = SA_SIGINFO; //ważne do odczytu payloadu
+act.sa_sigaction = &handle_signal; //zamiast handle
+sigemptyset(&act.sa_mask); //można maskę dać
+
+static void handle_signal(int signum, siginfo_t *info, void *context);
+
+/*
+typedef struct {
+                  int      si_signo;      Signal number 
+                  int      si_code;       Signal code 
+                  pid_t    si_pid;        Sending process ID
+                  uid_t    si_uid;        Real user ID of sending process
+                  void    *si_addr;       Address of faulting instruction
+                  int      si_status;     Exit value or signal
+                  union sigval si_value;  Signal value 
+              } siginfo_t;
+*/
+
+//Sprawdzanie statusu procesu potomka
+ child_pid = waitpid(pid, &status, WNOHANG);
+
+if(child_pid == -1){
+      perror("Błąd waitpid");
+      exit(EXIT_FAILURE);
+}else if(child_pid == 0){
+
+      //Proces potomny nadal pracuje
+      
+}else
+
+    //roces potomny zakonczył pracę

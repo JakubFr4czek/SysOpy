@@ -7,9 +7,6 @@
 #include <signal.h>
 #include <sys/wait.h>
 
-int fd[2];
-int flag = 1;
-int number = 0;
 /*
 1) program tworzy dwa procesy potomne. Nastepnie proces macierzysty co sekund�
 wysy�a SIGUSR1 do procesu potomnego 1. Proces potomny 1 po otrzymaniu sygna�u
@@ -19,62 +16,76 @@ procesu potomnego 2, kt�ry wyswietla te liczbe.
 2) Po wcisnieciu ctrl-c (SIGINT) powinno nastapic przerwanie wysy�ania sygnalow.
 Powtorne wcisniecie ctrl-c powinno wznowic wysylanie sygnalow*/
 
-void sigusr1_handler(){
-  int size = sizeof(int);
-  write(fd[1], &size, sizeof(int));
-  write(fd[1], &number, sizeof(int));
-  number++;
-}
+int fd[2];
+int nums = 0;
 
-void sigint_handler(){
-  if (flag == 0){
-    flag = 1;
-  } else{
-    flag = 0;
-  }
+void handle_sigusr1(){
+
+  write(fd[1], &nums, sizeof(nums));
+  nums += 1;  
+
 }
 
 int main (int lpar, char *tab[]){
-  pid_t pid1, pid2;
-  int d,i;
+ 
   pipe(fd);
-  pid1 = fork();
-  if (pid1<0){
-    perror("fork");
-    return 0;
-  }else if (pid1==0){//proces 1
+
+  pid_t child_1 = fork();
+  
+  if(child_1 == 0){ //child_1
+
+    //zamykam odczyt z potoku
     close(fd[0]);
+
+    signal(SIGUSR1, handle_sigusr1);
+
+    //Trzeba otrzymać sygnał
     while(1){
-      signal(SIGUSR1, sigusr1_handler);
+      
+      pause();
+
     }
+
     close(fd[1]);
+
     return 0;
-  }else{
-    pid2 = fork();
-    if (pid2<0){
-      perror("fork");
-      return 0;
-    }else if (pid2==0){//proces 2
+
+  }else{ //parent
+
+    pid_t child_2 = fork();
+
+    if(child_2 == 0){ //child_2
+
+      //Zamykam zapis do potoku
       close(fd[1]);
+
+      int liczba;
+
       while(1){
-        read(fd[0], &d, sizeof(int));
-        read(fd[0], &i, sizeof(int));
-        printf("przyjeto %d bajtow, wartosc:%d\n",d,i);
+      read(fd[0], &liczba, sizeof(liczba));
+      printf("child_2: %d\n", liczba);
       }
+
       close(fd[0]);
+
       return 0;
+
     }
+
   }
+
+  //macierzysty
+  
+  //zamykam potok
   close(fd[0]);
   close(fd[1]);
-  while(1) {
-    signal(SIGINT, sigint_handler);
-    if (flag == 1){
-      kill(pid1, SIGUSR1);
-      printf("wyslano SIGUSR1\n");
-    } else{
-      printf("wylaczono wysylanie sygnalow\n");
-    } 
+
+  while(1){
+
+    kill(child_1, SIGUSR1);
+    printf("wyslano SIGUSR1\n");
     sleep(1);
+
   }
+
 }

@@ -14,4 +14,4 @@ dynamic.o:
 	$(CXX) $(CFLAGS) -c zad1.c -o dynamic.o
 
 clean:
-	rm -rf dynamic dynamic.o bibl.o bibl.so
+	rm -rf dynamic dynamic.o bibl.o bibl.so 

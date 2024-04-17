@@ -8,6 +8,11 @@ int main (int l_param, char * wparam[]){
   int tab[20]={1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0};
 
   void *handle = dlopen("bibl.so", RTLD_LAZY);
+  
+  if(!handle){
+    perror("handle");
+    exit(EXIT_FAILURE);
+  }
 
   int (*f1) (int*, int) = dlsym(handle, "sumuj");
   double (*f2) (int, int) = dlsym(handle, "dziel");
@@ -18,7 +23,8 @@ int main (int l_param, char * wparam[]){
    oraz kompilujacy ten program
 */
 
-  for (i=0; i<3; i++) printf("Wynik: %d, %lf\n", f1(tab+i, 20-i), f2(tab[i], tab[i+1]));
+  printf("%d\n", f1(tab, 20));
+  printf("%f\n", f2(10.0, 2.0));
   dlclose(handle);
   return 0;
 }
