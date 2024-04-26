@@ -11,17 +11,21 @@ Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 ## Laboratorium 2
 [Biblioteki](./lab2)
 
-
 ## Laboratorium 3 
 [Pliki lustrzane](./lab3)
 
-
 ## Laboratorium 4
-[Procesy)](./lab4)
+[Procesy](./lab4)
 
 ## Laboratorium 5
 [Sygnały](./lab5)
 
 ## Laboratorium 6
 [Potoki](./lab6)
+
+## Laboratorium 7
+[Kolejki](./lab7)
+
+## Kolokwium 1
+[Rozwiązania](./kolokwium1%20(4.5))
 
