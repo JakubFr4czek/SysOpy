@@ -14,7 +14,7 @@
 #include <sys/wait.h>
 
 #define QUEUE_SIZE 20
-#define TEXT_LENGTH 10
+#define TEXT_LENGTH 3
 
 #define SEMAPHORE_SIZE "LAB8_semaphore_queue_space"
 #define SEMAPHORE_TASKS "LAB8_SEMAPHORE_TASKS"
@@ -26,7 +26,7 @@
 
 
 char* sample_text();
-void print_text(char*, int);
+void print_text(char*, int, int);
 void handle_sigint();
 
 typedef struct{
@@ -34,6 +34,7 @@ typedef struct{
     char* text[QUEUE_SIZE][TEXT_LENGTH];
     int head;
     int tail;
+    int users[QUEUE_SIZE];
 
 }Queue;
 
@@ -111,7 +112,8 @@ int main(int argc, char** argv){
                 memcpy(text, queue->text[queue->head], TEXT_LENGTH);
                 queue->head = (queue->head + 1) % QUEUE_SIZE;
 
-                print_text(text, i);
+                print_text(text, i, queue->users[queue->head]);
+                free(text);
                 
                 // Increasing queue space
                 if(sem_post(semaphore_queue_space) == - 1){
@@ -142,9 +144,11 @@ int main(int argc, char** argv){
                     exit(EXIT_FAILURE);
                 }
                 
+                srand(time(NULL) ^ (getpid() << 16));
                 char* text = sample_text();
 
                 memcpy(queue->text[queue->tail], text, TEXT_LENGTH);
+                queue->users[queue->tail] = i;
                 queue->tail = (queue->tail + 1) % QUEUE_SIZE;
 
                 free(text);
@@ -177,7 +181,7 @@ int main(int argc, char** argv){
 char* sample_text(){
 
     char* text = (char*)malloc(sizeof(char) * TEXT_LENGTH);
-    for(int i = 0; i < 10; i += 1){
+    for(int i = 0; i < TEXT_LENGTH; i += 1){
         text[i] = 97 + rand() % 26;
     }
     return text;
@@ -185,17 +189,19 @@ char* sample_text(){
 }
 
 // Prints text character by character with 1 second delay
-void print_text(char* text, int printer_id){
+void print_text(char* text, int printer_id, int client_id){
     
     for(int i = 0; i < TEXT_LENGTH; i += 1){
         
         if(DESCRIPTIVE_PRINTER)
-            printf("Printer %d: %c (Position in text: %d)\n", printer_id, text[i], i);
+            printf("Printer %d printing for client %d: %c (Position in text: %d)\n", printer_id, client_id, text[i], i);
         else
-            printf("Printer %d: %c\n", printer_id, text[i]);
+            printf("Printer %d printing for client %d: %c\n", printer_id, client_id, text[i]);
         sleep(1);
 
     }
+
+    //printf("Printer %d finished printind for printed for client %d\n", printer_id, client_id);
 
 }
 
