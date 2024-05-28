@@ -26,6 +26,12 @@ Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 ## Laboratorium 7
 [Kolejki](./lab7)
 
+## Laboratorium 8
+[Semafory, pamięć wspólna](./lab8)
+
+## Laboratorium 9
+[Wątki](./lab9)
+
 ## Kolokwium 1
 [Rozwiązania](./kolokwium1%20(4.5))
 
