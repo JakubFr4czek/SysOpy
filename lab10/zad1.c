@@ -2,13 +2,16 @@
 #include<pthread.h>
 #include<stdio.h>
 #include <unistd.h>
+#include<stdbool.h>
 
 #define REINDEERS 9
+#define ROUNDS 4
 
 int reindeers_waiting = 0;
+int rounds = 1;
+bool santa_sleeping = true;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond   = PTHREAD_COND_INITIALIZER;
-
 
 
 void* santa_handler(void* args){
@@ -26,38 +29,85 @@ void* santa_handler(void* args){
         pthread_mutex_unlock(&mutex);
 
         printf("Mikołaj: Budzę się\n");
+        printf("Mikołaj: Dostarczam zabawki\n");  
 
-        printf("Mikołaj: Dostarczam zabawki\n");
+        reindeers_waiting = 0;
+
+        santa_sleeping = false;
+        pthread_cond_broadcast(&cond);
+
+        pthread_mutex_unlock(&mutex);  
 
         // Santa sleeps for 2-4 seconds
         int sleep_time = rand() % 3 + 2;
         sleep(sleep_time);
 
+        pthread_mutex_lock(&mutex);
+
+        santa_sleeping = true;
+        pthread_cond_broadcast(&cond);
+
+        rounds += 1;
+
+        pthread_mutex_unlock(&mutex);
+
+        if(rounds == ROUNDS) break;
+
     }
 
-    return NULL;
+    pthread_exit(0);
 
 }
 
 void* reindeer_handler(void* args){
 
-    // Reindeer is on vacation
-    int vacation_time = rand() % 6 + 5;
-    sleep(vacation_time);
+    int id = *(int*)args;
 
-    pthread_mutex_lock(&mutex);
+    while(1){
 
-    reindeers_waiting += 1;
+        printf("Renifer %d: Lecę na wakacje\n", id);
 
-    if(reindeers_waiting == REINDEERS){
-        pthread_cond_broadcast(&cond);
+        // Reindeer is on vacation
+        int vacation_time = rand() % 6 + 5;
+        sleep(vacation_time);
+
+        pthread_mutex_lock(&mutex);
+
+        reindeers_waiting += 1;
+         printf("Renifer %d: Czekam na mikołaja, w sumie czeka %d reniferów\n", id, reindeers_waiting    );
+
+        if(reindeers_waiting == REINDEERS){
+
+            printf("Renifer %d: Wybudzam Mikołaja\n", id);
+            pthread_cond_broadcast(&cond);
+            
+        }
+
+        pthread_mutex_unlock(&mutex);
+
+        pthread_mutex_lock(&mutex);
+
+        while(santa_sleeping){
+            pthread_cond_wait(&cond, &mutex);
+        }
+
+        pthread_mutex_unlock(&mutex);
+
+        printf("Renifer %d: Dostarczam zabawki\n", id);
+
+        pthread_mutex_lock(&mutex);
+
+        while(!santa_sleeping){
+            pthread_cond_wait(&cond, &mutex);
+        }
+
+        pthread_mutex_unlock(&mutex);
+
+        if (rounds == ROUNDS) break;
+
     }
 
-    pthread_mutex_unlock(&mutex);
-
-    printf("JO CZEKOŁ\n");
-
-    return NULL;
+    pthread_exit(0);
 
 }
 
@@ -68,12 +118,17 @@ int main(){
 
     pthread_t reindeer[REINDEERS];
     for(int i = 0; i < REINDEERS; i += 1){
-        pthread_create(&reindeer[i], NULL, reindeer_handler, NULL);
+        int* id = (int*)malloc(sizeof(int));
+        *id = i;
+        pthread_create(&reindeer[i], NULL, reindeer_handler, (void*)id);
     }
 
-    while(1){
-        
+    pthread_join(santa, NULL);
+    for(int i = 0; i < REINDEERS; i += 1){
+        pthread_join(reindeer[i], NULL);
     }
 
+    pthread_mutex_destroy(&mutex);
+    pthread_cond_destroy(&cond); 
 
 }
