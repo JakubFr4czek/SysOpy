@@ -25,7 +25,13 @@
     "fcntl.h": "c",
     "stat.h": "c",
     "string.h": "c",
-    "semaphore.h": "c"
+    "semaphore.h": "c",
+    "stdbool.h": "c",
+    "inttypes.h": "c",
+    "in.h": "c",
+    "errno.h": "c",
+    "stdint.h": "c",
+    "socket.h": "c"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",
