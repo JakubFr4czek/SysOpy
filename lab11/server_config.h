@@ -37,6 +37,15 @@ typedef struct{
 
         } msg;
 
+        struct{
+            
+            char receiver_id[ID_LENGTH];
+            char message[MESSAGE_LENGTH];
+            char send_time[MAX_TIME_LENGTH];
+
+
+        } private_msg;
+
     } data;
 
 }message_t;

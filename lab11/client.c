@@ -45,6 +45,10 @@ void sigint_handler(int signo){
     stop_message.type = STOP;
     strcpy(stop_message.id, client_name);
     
+    if(send(server_fd, &stop_message, sizeof(stop_message), MSG_DONTWAIT) < 0){
+        perror("send\n");
+    }
+
     exit(0);
 
 }
@@ -83,7 +87,7 @@ int main(int argc, char *argv[]){
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     // Łączenie z serwerem
-    if(connect(server_fd, (struct sockaddr*)&socket_addr_in, sizeof(socket_addr_in)) > 0){
+    if(connect(server_fd, (struct sockaddr*)&socket_addr_in, sizeof(socket_addr_in)) != 0){
         connected = true;
     }else{
         perror("connect\n");
@@ -96,6 +100,7 @@ int main(int argc, char *argv[]){
 
     if(send(server_fd, &init_message, sizeof(init_message), MSG_DONTWAIT) < 0){
         perror("send\n");
+        return 1;
     }
 
     pid_t process_pid = fork();
@@ -108,16 +113,48 @@ int main(int argc, char *argv[]){
 
             scanf("%s", input);
 
-            if(strncmp(input, "LIST", 4) == 0){
-                printf("LISTUJEMY\n");
-            }else if(strncmp(input, "TOALL", 5) == 0){
-                printf("TOALLUJEMY\n");
-            }else if(strncmp(input, "TOONE", 5) == 0){
-                printf("TOONEUJEMY\n");
-            }else if(strncmp(input, "STOP", 4) == 0){
-                printf("STOPUJEMY\n");
-            }
+            if(strcmp(input, "LIST") == 0){
+                
+                message_t list_message;
+                list_message.type = LIST;
+                strcpy(list_message.id, client_name);
 
+                if(send(server_fd, &list_message, sizeof(list_message), MSG_DONTWAIT) < 0){
+                    perror("send\n");
+                }
+
+            }else if(strcmp(input, "2ALL") == 0){
+
+                char toallmessage[INPUT_BUFFER];
+
+                scanf("%s", toallmessage);
+
+                message_t toall_message;
+                toall_message.type = TOALL;
+                strcpy(toall_message.id, client_name);
+                strcpy(toall_message.data.msg.message, toallmessage);
+
+                if(send(server_fd, &toall_message, sizeof(toall_message), MSG_DONTWAIT) < 0){
+                    perror("send\n");
+                }
+
+            }else if(strcmp(input, "2ONE") == 0){
+
+                char receiver_id[ID_LENGTH];
+                char msg[INPUT_BUFFER];
+                scanf("%s %s", receiver_id, msg);
+
+                message_t toone_message;
+                toone_message.type = TOONE;
+                strcpy(toone_message.id, client_name);
+                strcpy(toone_message.data.private_msg.receiver_id, receiver_id);
+                strcpy(toone_message.data.private_msg.message, msg);
+
+                if(send(server_fd, &toone_message, sizeof(toone_message), MSG_DONTWAIT) < 0){
+                    perror("send\n");
+                }
+
+            }
             
 
         }else{ // parent - odbieranie
@@ -128,26 +165,38 @@ int main(int argc, char *argv[]){
                 switch(message.type){
 
                     case LIST:
-                        printf("LIST\n");
+
+                        for(int i = 0; i < MAX_CLIENTS; i += 1){
+
+                            if(message.data.list.ids[i][0] != '\0')
+                                printf("~ %s\n", message.data.list.ids[i]);
+
+                        }
+
                         break;
 
                     case TOALL:
-                        printf("TOALL\n");
+                        
+                        printf("%s | 2ALL | %s: %s\n", message.data.msg.send_time, message.id, message.data.msg.message);
+
                         break;
 
                     case TOONE:
-                        printf("TOONE\n");
-                        break;
+                        
+                        printf("%s | 2ONE | %s: %s\n", message.data.private_msg.send_time, message.id, message.data.private_msg.message);
 
-                    case STOP:
-                        printf("STOP\n");
                         break;
 
                     case ALIVE:
                         printf("ALIVE\n");
                         break;
 
+                    case STOP:
+                        kill(getpid(), SIGINT);
+                        break;
+
                     default:
+                        printf("Unknown command!\n");
                         break;
 
                 }

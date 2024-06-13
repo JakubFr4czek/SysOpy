@@ -31,7 +31,8 @@
     "in.h": "c",
     "errno.h": "c",
     "stdint.h": "c",
-    "socket.h": "c"
+    "socket.h": "c",
+    "typeinfo": "c"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",

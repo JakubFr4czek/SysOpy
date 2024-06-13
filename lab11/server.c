@@ -13,6 +13,7 @@
 #include<signal.h>
 #include<time.h>
 #include<stdlib.h>
+#include<string.h>
 #include"server_config.h"
 
 int server_fd;
@@ -35,15 +36,38 @@ static bool str_to_uint16(const char *str, uint16_t *res){
 }
 
 
-void sigint_handler(int signo){
+void prepare_clients_arr(){
 
-    for(int i = 0; i < number_of_clients; i += 1){
+    for(int i = 0; i < MAX_CLIENTS; i += 1){
 
-        shutdown(clients_fd[i], SHUT_RDWR);
-        close(clients_fd[i]);
+        clients_fd[i] = -1;
+        clients_ids[i][0] = '\0';
 
     }
 
+}
+
+void sigint_handler(int signo){
+
+    // Powiadamianie klienta o rozłączeniu
+    for(int i = 0; i < number_of_clients; i += 1){
+
+        if(clients_fd[i] != -1){
+
+            message_t stop_message;
+            stop_message.type = STOP;
+
+            if(send(clients_fd[i], &stop_message, sizeof(stop_message), MSG_DONTWAIT) < 0){
+                perror("send\n");
+            }
+
+            shutdown(clients_fd[i], SHUT_RDWR);
+            close(clients_fd[i]);
+        }
+
+    }
+
+    // Zamykanie serwera
     shutdown(server_fd, SHUT_RDWR);
     close(server_fd);
 
@@ -59,13 +83,20 @@ int main(int argc, char *argv[]){
         return 1;
     }    
 
+    // Przygotowanie tablicy przechowującej deskryptory klientów i ich id
+    prepare_clients_arr();
+
+    // Przechwycenie sygnału SIGINT
     signal(SIGINT, sigint_handler);
 
     // Przygotowanie struktury przechowującej adres ip
     struct in_addr socket_in_addr;
 
     // Rzutowanie adresu ip z postaci tekstowej na binarną
-    inet_pton(AF_INET, argv[1], &socket_in_addr);
+    if(inet_pton(AF_INET, argv[1], &socket_in_addr) < 0){
+        perror("inet_pton\n");
+        return 1;
+    }
 
     // Rzutowanie portu z postaci tekstowej na binarną
     uint16_t port;
@@ -86,61 +117,139 @@ int main(int argc, char *argv[]){
     // Bindowanie socketu
     if(bind(server_fd, (struct sockaddr*)&socket_addr_in, sizeof(socket_addr_in)) < 0){
         perror("bind\n");
+        return 1;
     }
 
     // Rozpoczynanie nasłuchiwania
     if(listen(server_fd, MAX_CLIENTS) < 0){
         perror("listen\n");
+        return 1;
     }
 
+    // Struktura przechowująca otrzymaną wiadomość
     message_t message;
 
+    // Główna pętla serwera
     while(true){
 
+        // Akceptowanie nowego klienta
         int client_fd = accept(server_fd, NULL, 0);
 
+        // Jeśli klient się połączył
         if(client_fd > 0){
+            
+            if(number_of_clients < MAX_CLIENTS){
 
-            if(number_of_clients + 1 < MAX_CLIENTS){
+                // Wyszukiwanie wolnego slota
+                for(int i = 0; i < MAX_CLIENTS; i += 1){
 
-                clients_fd[number_of_clients] = client_fd;
-                number_of_clients++;
+                    if(clients_fd[i] == -1){
 
-            }
+                        clients_fd[i] = client_fd;
+                        number_of_clients += 1;
+                        break;
 
-            else{
+                    }
 
+                }
+
+            }else{
                 printf("Too many clients!\n");
-
             }
 
         }
 
-        for(int i = 0; i < number_of_clients; i += 1){
+        for(int i = 0; i < MAX_CLIENTS; i += 1){
 
-            if(recv(clients_fd[i], &message, sizeof(message_t), MSG_DONTWAIT) > 0){
+            if(clients_fd[i] != -1 && recv(clients_fd[i], &message, sizeof(message_t), MSG_DONTWAIT) > 0){
+
+                time_t rawtime;
+                struct tm *timeinfo;
+                char time_buffer[80];
+                time(&rawtime);
+                timeinfo = localtime(&rawtime);
+                strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S", timeinfo);
 
                 switch(message.type){
-
+                    
+                    // Klient po połączeniu się zawsze wysyła init, żeby przekzać swoje id (nazwę)
                     case INIT:
-                        printf("Client %s has joined the server!\n", message.id);
-                        strcpy(clients_ids[i], message.id);
+                    
+                        printf("%s | Client %s has joined the server!\n", time_buffer, message.id);
+                        strcpy(clients_ids[i], message.id); // Zapisanie id klienta
                         break;
 
                     case LIST:
-                        printf("LIST\n");
+
+                        printf("%s | Client %s requested LIST!\n", time_buffer, message.id);
+
+                        message_t list_message;
+                        list_message.type = LIST;
+                        strcpy(list_message.id, "server");
+
+                        for(int j = 0; j < MAX_CLIENTS; j += 1){
+                            strcpy(list_message.data.list.ids[j], clients_ids[j]);
+                        }
+
+                        if(send(clients_fd[i], &list_message, sizeof(message_t), MSG_DONTWAIT) < 0){
+                            perror("send\n");
+                            return 1;
+                        }
+
                         break;
 
                     case TOALL:
-                        printf("TOALL\n");
+
+                        printf("%s | %s sent message to all clients\n", time_buffer, message.id);
+
+                        strcpy(message.data.msg.send_time, time_buffer);
+
+                        for(int j = 0; j < number_of_clients; j += 1){
+
+                            if(clients_fd[j] != -1 && clients_fd[j] != clients_fd[i]){
+
+                                if(send(clients_fd[j], &message, sizeof(message), MSG_DONTWAIT) < 0){
+                                    perror("send\n");
+                                    return 1;
+                                }
+
+                            }
+
+                        }
+
                         break;
 
                     case TOONE:
-                        printf("TOONE\n");
-                        break;
 
+                        printf("%s | %s sent private message to %s\n", time_buffer, message.id, message.data.private_msg.receiver_id);
+
+                        strcpy(message.data.private_msg.send_time, time_buffer);
+
+                        for(int j = 0; j < number_of_clients; j += 1){
+
+                            if(clients_fd[j] != -1 && strcmp(clients_ids[j], message.data.private_msg.receiver_id) == 0){
+
+                                if(send(clients_fd[j], &message, sizeof(message), MSG_DONTWAIT) < 0){
+                                    perror("send\n");
+                                    return 1;
+                                }
+
+                                break;
+
+                            }
+
+                        }
+
+
+                        break;
+                    // Klient wysyła stop, gdy chce się rozłączyć
                     case STOP:
-                        printf("Client %s has left the server\n", message.id);
+
+                        printf("%s | Client %s has left the server\n", time_buffer, message.id);
+                        strcpy(clients_ids[i], "\0"); // Usuwanie id klienta
+                        close(clients_fd[i]);
+                        clients_fd[i] = -1;
+                        number_of_clients -= 1;
                         break;
 
                     case ALIVE:
