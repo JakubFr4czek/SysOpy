@@ -32,6 +32,8 @@ Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 ## Laboratorium 9
 [Wątki](./lab9)
 
+![Alt text](img/threads.jpg)
+
 ## Laboratorium 10
 [Mutexy](./lab10)
 
