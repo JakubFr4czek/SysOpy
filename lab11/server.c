@@ -16,10 +16,16 @@
 #include<string.h>
 #include"server_config.h"
 
+#define TIME_BUFFER_SIZE 80
+
 int server_fd;
 int clients_fd[MAX_CLIENTS];
 char clients_ids[MAX_CLIENTS][ID_LENGTH];
+clock_t clients_times[MAX_CLIENTS]; 
 int number_of_clients = 0;
+
+// Bufor przechowujący czas;
+char time_buffer[TIME_BUFFER_SIZE];
 
 // Funkcja pożyczona z internetu
 // https://stackoverflow.com/questions/20019786/safe-and-portable-way-to-convert-a-char-to-uint16-t
@@ -42,8 +48,39 @@ void prepare_clients_arr(){
 
         clients_fd[i] = -1;
         clients_ids[i][0] = '\0';
+        clients_times[i] = -1;
 
     }
+
+}
+
+// Wysyłanie informacji o rozłączeniu do klienta
+void disconnect_client(int client_number){
+
+    if(clients_fd[client_number] != -1){
+
+    message_t stop_message;
+    stop_message.type = STOP;
+    if(send(clients_fd[client_number], &stop_message, sizeof(stop_message), MSG_DONTWAIT) < 0) perror("send\n");
+
+    shutdown(clients_fd[client_number], SHUT_RDWR);
+    close(clients_fd[client_number]);
+
+    }else perror("disconnect_client\n");
+
+}
+
+// Uwuwanie danych klienta
+void remove_client(int client_number){
+
+    if(clients_fd[client_number] != -1){
+
+    strcpy(clients_ids[client_number], "\0"); // Usuwanie id klienta
+    close(clients_fd[client_number]);
+    clients_fd[client_number] = -1;
+    number_of_clients -= 1;
+
+    }else perror("remove_client\n");
 
 }
 
@@ -52,18 +89,8 @@ void sigint_handler(int signo){
     // Powiadamianie klienta o rozłączeniu
     for(int i = 0; i < number_of_clients; i += 1){
 
-        if(clients_fd[i] != -1){
-
-            message_t stop_message;
-            stop_message.type = STOP;
-
-            if(send(clients_fd[i], &stop_message, sizeof(stop_message), MSG_DONTWAIT) < 0){
-                perror("send\n");
-            }
-
-            shutdown(clients_fd[i], SHUT_RDWR);
-            close(clients_fd[i]);
-        }
+        disconnect_client(i); // Musi być wykonane przed remove_client
+        remove_client(i);
 
     }
 
@@ -75,6 +102,32 @@ void sigint_handler(int signo){
 
 }
 
+void check_for_timeout(){
+
+    for(int i = 0; i < MAX_CLIENTS; i += 1){
+
+        if(clients_fd[i] != -1 && (clock() - clients_times[i]) / CLOCKS_PER_SEC > 10){
+
+            printf("%s | Client %s timed out\n", time_buffer, clients_ids[i]);
+
+            disconnect_client(i);
+            remove_client(i);
+
+        }
+
+    }
+
+}
+
+void update_time(char* time_buffer){
+
+    time_t rawtime;
+    struct tm *timeinfo;
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    strftime(time_buffer, sizeof(char) * TIME_BUFFER_SIZE, "%Y-%m-%d %H:%M:%S", timeinfo);
+
+}
 
 int main(int argc, char *argv[]){
 
@@ -131,6 +184,8 @@ int main(int argc, char *argv[]){
 
     // Główna pętla serwera
     while(true){
+        
+        update_time(time_buffer);
 
         // Akceptowanie nowego klienta
         int client_fd = accept(server_fd, NULL, 0);
@@ -147,6 +202,7 @@ int main(int argc, char *argv[]){
 
                         clients_fd[i] = client_fd;
                         number_of_clients += 1;
+                        clients_times[i] = clock();
                         break;
 
                     }
@@ -154,7 +210,7 @@ int main(int argc, char *argv[]){
                 }
 
             }else{
-                printf("Too many clients!\n");
+                printf("%s | Too many clients!\n", time_buffer);
             }
 
         }
@@ -163,12 +219,7 @@ int main(int argc, char *argv[]){
 
             if(clients_fd[i] != -1 && recv(clients_fd[i], &message, sizeof(message_t), MSG_DONTWAIT) > 0){
 
-                time_t rawtime;
-                struct tm *timeinfo;
-                char time_buffer[80];
-                time(&rawtime);
-                timeinfo = localtime(&rawtime);
-                strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S", timeinfo);
+            
 
                 switch(message.type){
                     
@@ -191,10 +242,7 @@ int main(int argc, char *argv[]){
                             strcpy(list_message.data.list.ids[j], clients_ids[j]);
                         }
 
-                        if(send(clients_fd[i], &list_message, sizeof(message_t), MSG_DONTWAIT) < 0){
-                            perror("send\n");
-                            return 1;
-                        }
+                        if(send(clients_fd[i], &list_message, sizeof(message_t), MSG_DONTWAIT) < 0) perror("send\n");
 
                         break;
 
@@ -208,10 +256,7 @@ int main(int argc, char *argv[]){
 
                             if(clients_fd[j] != -1 && clients_fd[j] != clients_fd[i]){
 
-                                if(send(clients_fd[j], &message, sizeof(message), MSG_DONTWAIT) < 0){
-                                    perror("send\n");
-                                    return 1;
-                                }
+                                if(send(clients_fd[j], &message, sizeof(message), MSG_DONTWAIT) < 0) perror("send\n");
 
                             }
 
@@ -229,31 +274,27 @@ int main(int argc, char *argv[]){
 
                             if(clients_fd[j] != -1 && strcmp(clients_ids[j], message.data.private_msg.receiver_id) == 0){
 
-                                if(send(clients_fd[j], &message, sizeof(message), MSG_DONTWAIT) < 0){
-                                    perror("send\n");
-                                    return 1;
-                                }
-
+                                if(send(clients_fd[j], &message, sizeof(message), MSG_DONTWAIT) < 0) perror("send\n");
                                 break;
 
                             }
 
                         }
 
-
                         break;
                     // Klient wysyła stop, gdy chce się rozłączyć
                     case STOP:
 
                         printf("%s | Client %s has left the server\n", time_buffer, message.id);
-                        strcpy(clients_ids[i], "\0"); // Usuwanie id klienta
-                        close(clients_fd[i]);
-                        clients_fd[i] = -1;
-                        number_of_clients -= 1;
+                        //Klient wyszedł sam więc nie ma potrzeby wysyłać mu STOP, i tak go nie przyjmie
+                        remove_client(i);
                         break;
 
                     case ALIVE:
-                        printf("ALIVE\n");
+                        
+                        printf("%s | Client %s sent ALIVE message\n", time_buffer, message.id);
+                        clients_times[i] = clock();
+
                         break;
 
                     default:
@@ -265,6 +306,8 @@ int main(int argc, char *argv[]){
             }
 
         }
+        
+        check_for_timeout();
 
     }
 
