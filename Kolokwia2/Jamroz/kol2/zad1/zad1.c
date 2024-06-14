@@ -17,6 +17,7 @@ void* fun_watka(void* parametr) {
 
   printf("%s ", slownik[NR++]);    fflush(stdout);
   if (NR>=L_SLOW) NR=0;
+  printf("\n");
   //zwolnij mutex 'mutex01'
   //...
 
@@ -30,8 +31,22 @@ int main(void){
   //Utworz 20 watkow realizujacych funkcje 'fun_watka'
   //...
 
+  pthread_t watki[20];
+
+  for(int i = 0; i < 20; i += 1){
+
+    pthread_create(&watki[i], NULL, fun_watka, NULL);
+    
+  }
+
   //poczekaj na zakonczenie wszystkich watkow
   //...
+
+  for(int i = 0; i < 20; i += 1){
+
+    pthread_join(watki[i], NULL);
+
+  }
 
   printf("\n");
 

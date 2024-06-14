@@ -32,10 +32,17 @@ Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 ## Laboratorium 9
 [Wątki](./lab9)
 
-![Alt text](img/threads.jpg)
-
 ## Laboratorium 10
 [Mutexy](./lab10)
+
+![Alt text](img/mutexy.jpg)
+
+## Laboratorium 11
+[Sockety I](./lab11)
+
+![Alt text](img/sockety1.jpg)
+
+![Alt text](img/sockety2.jpg)
 
 ## Kolokwium 1
 [Rozwiązania](./kolokwium1%20(4.5))
