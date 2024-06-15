@@ -48,9 +48,16 @@ Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 ## Laboratorium 11
 [Sockety I](./lab11)
 
+# Sockety przez IPv4 TCP
+
 ![Alt text](img/sockety1.jpg)
 
 ![Alt text](img/sockety2.jpg)
+
+# Sockety lokalnie UDP
+
+![Alt text](img/socket_udp.jpg)
+
 
 ## Kolokwium 1 (4.5 / 5.0)
 [Rozwiązania](./kolokwium1%20(4.5))
