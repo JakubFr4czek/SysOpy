@@ -32,7 +32,9 @@
     "errno.h": "c",
     "stdint.h": "c",
     "socket.h": "c",
-    "typeinfo": "c"
+    "typeinfo": "c",
+    "msg.h": "c",
+    "ipc.h": "c"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",

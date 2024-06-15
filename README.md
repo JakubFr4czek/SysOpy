@@ -26,6 +26,14 @@ Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 ## Laboratorium 7
 [Kolejki](./lab7)
 
+# Kolejki POSIX
+
+![Alt text](img/posix_queue.jpg)
+
+# Kolejki System V
+
+![Alt text](img/systemV_queue.jpg)
+
 ## Laboratorium 8
 [Semafory, pamięć wspólna](./lab8)
 
