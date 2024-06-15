@@ -26,9 +26,7 @@ int main() {
         .sun_path = SOCK_PATH
     };
 
-    socklen_t addr_len = sizeof(addr);
-
-    bind(fd, (struct sockaddr*)&addr, addr_len);
+    bind(fd, (struct sockaddr*)&addr, sizeof(struct sockaddr_un));
 
     char buf[20];
     if(read(fd, buf, 20) == -1)

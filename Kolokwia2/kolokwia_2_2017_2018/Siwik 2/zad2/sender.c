@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
     printf("Not a suitable number of program parameters\n");
     return(1);
    }
-    sleep(1);
+    sleep(2);
 
 
     /*********************************************
@@ -32,9 +32,7 @@ int main(int argc, char *argv[]) {
         .sun_path = SOCK_PATH
     };
 
-    socklen_t addr_len = sizeof(addr);
-
-    connect(fd, (struct sockaddr*)&addr, addr_len);
+    connect(fd, (struct sockaddr*)&addr, sizeof(struct sockaddr_un));
 
     char buff[20];
     int to_send = sprintf(buff, argv[1]);
