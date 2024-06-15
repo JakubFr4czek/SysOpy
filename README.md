@@ -37,6 +37,10 @@ Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 ## Laboratorium 8
 [Semafory, pamięć wspólna](./lab8)
 
+# Semafory POSIX
+
+![Alt text](img/posix_semaphore.jpg)
+
 ## Laboratorium 9
 [Wątki](./lab9)
 
