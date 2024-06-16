@@ -15,6 +15,7 @@
 #include<stdlib.h>
 #include<signal.h>
 #include<string.h>
+#include<pthread.h>
 #include"server_config.h"
 
 #define INPUT_BUFFER 1024
@@ -28,6 +29,9 @@ struct sockaddr_in socket_addr_in;
 
 // Zmienna przechowująca rozmiar powyższej struktury
 socklen_t socket_addr_len;
+
+// Wątek odpowiedzialny za wysyłanie ALIVE
+pthread_t alive_thread;
 
 // Funkcja pożyczona z internetu
 // https://stackoverflow.com/questions/20019786/safe-and-portable-way-to-convert-a-char-to-uint16-t
@@ -59,20 +63,31 @@ void sigint_handler(int signo){
 }
 
 // ALIVE jest wysyłane co 2 sekundy, a timeout następuje po 10
-void send_alive(clock_t *prev_time){
+void* send_alive(){
 
-    if((clock() - *prev_time) / CLOCKS_PER_SEC > 2){
+    // Czas od ostatniego wysłania wiadomości ALIVE
+    clock_t prev_time = clock();
 
-        message_t alive_message;
-        alive_message.type = ALIVE;
-        strcpy(alive_message.id, client_name);
+    while(true){
 
-        if(sendto(server_fd, &alive_message, sizeof(alive_message), 0,
-                    (struct sockaddr*)&socket_addr_in, sizeof(socket_addr_in)) < 0) perror("send\n");
+        if((clock() - prev_time) / CLOCKS_PER_SEC > 2){
 
-        *prev_time = clock();
+            message_t alive_message;
+            alive_message.type = ALIVE;
+            strcpy(alive_message.id, client_name);
 
+            if(sendto(server_fd, &alive_message, sizeof(alive_message), 0,
+                        (struct sockaddr*)&socket_addr_in, sizeof(socket_addr_in)) < 0) perror("send\n");
+
+            prev_time = clock();
+
+        }
+    
     }
+
+    pthread_exit(0);
+
+    return NULL;
 }
 
 int main(int argc, char *argv[]){
@@ -107,9 +122,6 @@ int main(int argc, char *argv[]){
     // Tworzenie socketu
     server_fd = socket(AF_INET, SOCK_DGRAM, 0);
 
-    // Czas od ostatniego wysłania wiadomości ALIVE
-    clock_t prev_time = clock();
-
     // Wysyłanie inita
     message_t init_message;
     init_message.type = INIT;
@@ -117,6 +129,9 @@ int main(int argc, char *argv[]){
 
     if(sendto(server_fd, &init_message, sizeof(init_message), 0,
           (struct sockaddr*)&socket_addr_in, sizeof(socket_addr_in)) < 0) perror("send\n");
+
+    // Tworzenie wątku odpowiedzialnego za wysyłanie ALIVE
+    pthread_create(&alive_thread, NULL, send_alive, NULL);
 
     // Tworzenie procesu potomnego
     pid_t process_pid = fork();
@@ -216,8 +231,6 @@ int main(int argc, char *argv[]){
             }
 
         }
-
-        send_alive(&prev_time);
 
     }
 

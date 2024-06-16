@@ -14,6 +14,7 @@
 #include<time.h>
 #include<stdlib.h>
 #include<string.h>
+#include<pthread.h>
 #include"server_config.h"
 
 #define TIME_BUFFER_SIZE 80
@@ -28,6 +29,9 @@ clock_t clients_times[MAX_CLIENTS]; // Przechowuje czas od ostatniego pingu klie
 int number_of_clients = 0; // Liczba aktualnie połączonych klientów
 
 char time_buffer[TIME_BUFFER_SIZE]; // Przechowuje aktualny czas
+
+// Wątek odpowiedzialny za timeouty klientów
+pthread_t timeout_thread;
 
 // Funkcja pożyczona z internetu
 // https://stackoverflow.com/questions/20019786/safe-and-portable-way-to-convert-a-char-to-uint16-t
@@ -76,18 +80,21 @@ void remove_client(int client_number){
     if(clients[client_number] != -1){
 
     strcpy(clients_ids[client_number], "\0"); // Usuwanie id klienta
-    close(clients[client_number]);
+    clients_times[client_number] = -1;
     clients[client_number] = -1;
     number_of_clients -= 1;
 
-    }else perror("remove_client\n");
+    }
 
 }
 
 void sigint_handler(int signo){
 
+    // Zatrzymywanie wątku odpowiedzialnego za timeouty
+    pthread_cancel(timeout_thread);
+
     // Powiadamianie klienta o rozłączeniu
-    for(int i = 0; i < number_of_clients; i += 1){
+    for(int i = 0; i < MAX_CLIENTS; i += 1){
 
         disconnect_client(i); // Musi być wykonane przed remove_client
         remove_client(i);
@@ -102,20 +109,30 @@ void sigint_handler(int signo){
 
 }
 
-void check_for_timeout(){
+void* check_for_timeout(void* arg){
 
-    for(int i = 0; i < MAX_CLIENTS; i += 1){
+    while(true){
 
-        if(clients[i] != -1 && (clock() - clients_times[i]) / CLOCKS_PER_SEC > 10){
+        for(int i = 0; i < MAX_CLIENTS; i += 1){
 
-            printf("%s | Client %s timed out\n", time_buffer, clients_ids[i]);
+            if(clients[i] != -1 && (clock() - clients_times[i]) / CLOCKS_PER_SEC > 10){
+                
+                if(clients[i] != -1 && clients_times[i] != -1){
+                printf("%s | Client %s timed out\n", time_buffer, clients_ids[i]);
 
-            disconnect_client(i);
-            remove_client(i);
+                disconnect_client(i);
+                remove_client(i);
+                }
+
+            }
 
         }
 
     }
+
+    pthread_exit(0);
+
+    return NULL;
 
 }
 
@@ -181,6 +198,10 @@ int main(int argc, char *argv[]){
     struct sockaddr_in client_in_addr;
     socklen_t client_addr_len = sizeof(client_in_addr); 
 
+    // Startowanie wątku odpowiedzialnego za timeouty klientów
+    pthread_create(&timeout_thread, NULL, check_for_timeout, NULL);
+
+
     // Główna pętla serwera
     while(true){
         
@@ -193,9 +214,10 @@ int main(int argc, char *argv[]){
             int current_client = -1;
             for(int i = 0; i < MAX_CLIENTS; i += 1){
 
-                if(client[i] == 1 && strcmp(clients_ids[i], message.id) == 0){
+                if(clients[i] == 1 && strcmp(clients_ids[i], message.id) == 0){
                     is_registered = true;
                     current_client = i;
+                    break;
                 }
 
             }
@@ -213,11 +235,11 @@ int main(int argc, char *argv[]){
                         for(int i = 0; i < MAX_CLIENTS; i += 1){
 
                             if(clients[i] == -1){
-                                    
-                                clients[i] = 1;
+                                
                                 clients_addr[i] = client_in_addr;
                                 strcpy(clients_ids[i], message.id); // Zapisanie id klienta
                                 clients_times[i] = clock();
+                                clients[i] = 1;
                                 number_of_clients += 1;
 
                                 printf("%s | Client %s has joined the server!\n", time_buffer, message.id);
@@ -259,7 +281,7 @@ int main(int argc, char *argv[]){
 
                     strcpy(message.data.msg.send_time, time_buffer);
 
-                    for(int j = 0; j < number_of_clients; j += 1){
+                    for(int j = 0; j < MAX_CLIENTS; j += 1){
 
                         if(clients[j] != -1 && strcmp(clients_ids[j], clients_ids[current_client])){
 
@@ -279,7 +301,7 @@ int main(int argc, char *argv[]){
 
                     strcpy(message.data.private_msg.send_time, time_buffer);
 
-                    for(int j = 0; j < number_of_clients; j += 1){
+                    for(int j = 0; j < MAX_CLIENTS; j += 1){
 
                         if(clients[j] != -1 && strcmp(clients_ids[j], message.data.private_msg.receiver_id) == 0){
                                 
@@ -318,8 +340,6 @@ int main(int argc, char *argv[]){
             }
 
         }
-
-        check_for_timeout();
 
     }
 
