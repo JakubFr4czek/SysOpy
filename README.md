@@ -66,6 +66,9 @@ Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 
 ![Alt text](img/socket_udp.jpg)
 
+## Laboratorium 12
+[Sockety II](./lab12)
+
 
 ## Kolokwium 1 (4.5 / 5.0)
 [Rozwiązania](./kolokwium1%20(4.5))
