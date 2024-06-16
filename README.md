@@ -62,8 +62,6 @@ Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 
 ![Alt text](img/sockety1.jpg)
 
-![Alt text](img/sockety2.jpg)
-
 ### Sockety lokalnie UDP
 
 ![Alt text](img/socket_udp.jpg)
