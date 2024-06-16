@@ -26,18 +26,18 @@ Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 ## Laboratorium 7
 [Kolejki](./lab7)
 
-# Kolejki POSIX
+## Kolejki POSIX
 
 ![Alt text](img/posix_queue.jpg)
 
-# Kolejki System V
+## Kolejki System V
 
 ![Alt text](img/systemV_queue.jpg)
 
 ## Laboratorium 8
 [Semafory, pamięć wspólna](./lab8)
 
-# Semafory POSIX
+### Semafory POSIX
 
 ![Alt text](img/posix_semaphore.jpg)
 
@@ -50,13 +50,13 @@ Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 ## Laboratorium 11
 [Sockety I](./lab11)
 
-# Sockety przez IPv4 TCP
+### Sockety przez IPv4 TCP
 
 ![Alt text](img/sockety1.jpg)
 
 ![Alt text](img/sockety2.jpg)
 
-# Sockety lokalnie UDP
+### Sockety lokalnie UDP
 
 ![Alt text](img/socket_udp.jpg)
 
