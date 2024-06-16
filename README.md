@@ -41,6 +41,10 @@ Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 
 ![Alt text](img/posix_semaphore.jpg)
 
+### Semafory System V
+
+![Alt text](img/semafory_systemV.jpg)
+
 ### Pamięć współdzielona
 
 ![Alt text](img/shared_memory.jpg)
