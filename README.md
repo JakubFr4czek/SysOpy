@@ -41,6 +41,10 @@ Repozytorium zawiera rozwiązania zadań z przedmiotu Systemy Operacyjne.
 
 ![Alt text](img/posix_semaphore.jpg)
 
+### Pamięć współdzielona
+
+![Alt text](img/shared_memory.jpg)
+
 ## Laboratorium 9 i Laboratorium 10
 [Wątki](./lab9)
 [Mutexy](./lab10)
